@@ -5,6 +5,11 @@ by some of the "safe printf" examples that I've seen. But none of them attempted
 to actually implement the `printf` fully with all of its quirks. This code is 
 (an attempt) to do that.
 
+An advantage of this, is that in principle, we can support ANY type being passed
+to a format, even complex objects. While this is not supported yet, I do plan 
+for it going forward. The current plan of having `"%?"` mean "call `to_string`
+on the argument and print the result.
+
 NOTE: floating point is not implemented, as it is complex to do correctly, but 
       is on the TODO list.
 	  
