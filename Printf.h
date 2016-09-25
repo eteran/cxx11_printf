@@ -240,6 +240,8 @@ R formatted_integer(...) {
 //------------------------------------------------------------------------------
 template <class Context>
 int process_format(Context &ctx, const char *format, Flags flags, long int width, long int precision, Modifiers modifier) {
+	(void)ctx;
+	(void)format;
 	(void)flags;
 	(void)width;
 	(void)precision;
