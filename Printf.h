@@ -211,12 +211,13 @@ inline const char *formatted_string(...) {
 	return nullptr;
 }
 
-template <class T>
-uintptr_t formatted_pointer(T p, typename std::enable_if<std::is_convertible<T, const void *>::value>::type* = 0) {
-	return reinterpret_cast<uintptr_t>(p);
+template <class R, class T>
+R formatted_pointer(T p, typename std::enable_if<std::is_convertible<T, const void *>::value>::type* = 0) {
+	return reinterpret_cast<R>(reinterpret_cast<uintptr_t>(p));
 }
 
-inline uintptr_t formatted_pointer(...) {
+template <class R>
+inline R formatted_pointer(...) {
 	assert(!"Non-Pointer Argument For Pointer Format");
 	return 0;
 }
@@ -309,7 +310,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		ch           = 'x';
 		flags.prefix = 1;
 		// NOTE(eteran): GNU printf prints "(nil)" for NULL pointers, we print 0x0
-		s_ptr        = itoa(num_buf, ch, precision, formatted_pointer(arg), width, flags, &slen);
+		s_ptr        = itoa(num_buf, ch, precision, formatted_pointer<uintptr_t>(arg), width, flags, &slen);
 
 		output_string(ch, s_ptr, precision, width, flags, slen, ctx);
 		return Printf(ctx, format + 1, ts...);
@@ -410,28 +411,28 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 	case 'n':
 		switch(modifier) {
 		case Modifiers::MOD_CHAR:
-			*reinterpret_cast<signed char *>(formatted_pointer(arg)) = ctx.written;
+			*formatted_pointer<signed char *>(arg) = ctx.written;
 			break;
 		case Modifiers::MOD_SHORT:
-			*reinterpret_cast<short int *>(formatted_pointer(arg)) = ctx.written;
+			*formatted_pointer<short int *>(arg) = ctx.written;
 			break;
 		case Modifiers::MOD_LONG:
-			*reinterpret_cast<long int *>(formatted_pointer(arg)) = ctx.written;
+			*formatted_pointer<long int *>(arg) = ctx.written;
 			break;
 		case Modifiers::MOD_LONG_LONG:
-			*reinterpret_cast<long long int *>(formatted_pointer(arg)) = ctx.written;
+			*formatted_pointer<long long int *>(arg) = ctx.written;
 			break;
 		case Modifiers::MOD_INTMAX_T:
-			*reinterpret_cast<intmax_t *>(formatted_pointer(arg)) = ctx.written;
+			*formatted_pointer<intmax_t *>(arg) = ctx.written;
 			break;
 		case Modifiers::MOD_SIZE_T:
-			*reinterpret_cast<std::make_signed<size_t>::type *>(formatted_pointer(arg)) = ctx.written;
+			*formatted_pointer<std::make_signed<size_t>::type *>(arg) = ctx.written;
 			break;
 		case Modifiers::MOD_PTRDIFF_T:
-			*reinterpret_cast<ptrdiff_t *>(formatted_pointer(arg)) = ctx.written;
+			*formatted_pointer<ptrdiff_t *>(arg) = ctx.written;
 			break;
 		default:
-			*reinterpret_cast<int *>(formatted_pointer(arg)) = ctx.written;
+			*formatted_pointer<int *>(arg) = ctx.written;
 			break;
 		}
 
