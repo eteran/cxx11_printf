@@ -27,7 +27,7 @@ int main() {
 	// first test correctness
 	cxx11::stdout_writer ctx;
 	cxx11::Printf(ctx, "hello %*s, %c, %d, %08x %p %016u %02x\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1);
-	printf(               "hello %*s, %c, %d, %08x %p %016u %02x\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1);
+	printf(            "hello %*s, %c, %d, %08x %p %016u %02x\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1);
 	
 	typedef std::chrono::microseconds ms;
 	
