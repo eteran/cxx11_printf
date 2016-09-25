@@ -45,5 +45,5 @@ int main() {
 	});	
 	
 	std::cerr << "First Took:  " << time1.count() << " \xC2\xB5s to execute." << std::endl;	
-	std::cerr << "Second Took: " << time2.count() << " \xC2\xB5s to execute." << std::endl;	
+	std::cerr << "Second Took: " << time2.count() << " \xC2\xB5s to execute." << std::endl;
 }

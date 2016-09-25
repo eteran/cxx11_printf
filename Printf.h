@@ -161,10 +161,6 @@ const char *itoa(char *buf, char base, int precision, T d, int width, Flags flag
 template <class Context>
 void output_string(char ch, const char *s_ptr, int precision, long int width, Flags flags, int len, Context &ctx) {
 
-	if(!s_ptr) {
-		s_ptr = "(null)";
-	}
-	
 	if((ch == 's' && precision >= 0 && precision < len)) {
 		len = precision;
 	}
@@ -385,6 +381,9 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 
 	case 's':
 		s_ptr = formatted_string(arg);
+		if(!s_ptr) {
+			s_ptr = "(null)";
+		}
 		output_string('s', s_ptr, precision, width, flags, strlen(s_ptr), ctx);
 		return Printf(ctx, format + 1, ts...);
 
