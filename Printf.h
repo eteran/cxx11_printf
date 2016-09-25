@@ -8,6 +8,8 @@
 #include <cassert>
 #include <cstring>
 
+#define CXX11_PRINT_EXTENSIONS
+
 namespace cxx11 {
 namespace detail {
 
@@ -139,8 +141,10 @@ const char *itoa(char *buf, char base, int precision, T d, int width, Flags flag
 		return itoa_internal<'d', 10>(buf, precision, d, width, flags, alphabet_l, rlen);
 	case 'u':
 		return itoa_internal<'u', 10>(buf, precision, d, width, flags, alphabet_l, rlen);
+#ifdef CXX11_PRINT_EXTENSIONS
 	case 'b':
 		return itoa_internal<'B', 2>(buf, precision, d, width, flags, alphabet_l, rlen);
+#endif
 	case 'X':
 		return itoa_internal<'X', 16>(buf, precision, d, width, flags, alphabet_u, rlen);
 	case 'x':
@@ -298,7 +302,9 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 	case 'X':
 	case 'u':
 	case 'o':
+#ifdef CXX11_PRINT_EXTENSIONS
 	case 'b': // extension, BINARY mode
+#endif
 		if(precision < 0) {
 			precision = 1;
 		}
