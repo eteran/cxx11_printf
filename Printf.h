@@ -7,8 +7,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <string>
 
-#define CXX11_PRINT_EXTENSIONS
+#define CXX11_PRINTF_EXTENSIONS
 
 namespace cxx11 {
 namespace detail {
@@ -143,7 +144,7 @@ const char *itoa(char *buf, char base, int precision, T d, int width, Flags flag
 		return itoa_internal<'d', 10>(buf, precision, d, width, flags, alphabet_l, rlen);
 	case 'u':
 		return itoa_internal<'u', 10>(buf, precision, d, width, flags, alphabet_l, rlen);
-#ifdef CXX11_PRINT_EXTENSIONS
+#ifdef CXX11_PRINTF_EXTENSIONS
 	case 'b':
 		return itoa_internal<'B', 2>(buf, precision, d, width, flags, alphabet_l, rlen);
 #endif
@@ -200,6 +201,26 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 // NOTE(eteran): Here is some code to fetch arguments of specific types. We also need a few 
 //               default handlers, this code should never really be encountered, but
 //               but we need it to keep the linker happy.
+
+#ifdef CXX11_PRINTF_EXTENSIONS
+inline std::string formatted_object(std::string obj) {
+	return obj;
+}
+
+template <class T>
+std::string to_string(T) {
+	assert(!"No to_string found for this object type");
+	return "";
+}
+
+template <class T>
+std::string formatted_object(T obj) {
+	using std::to_string;
+	using detail::to_string;
+	return to_string(obj);
+}
+#endif
+
 
 template <class T>
 const char *formatted_string(T s, typename std::enable_if<std::is_convertible<T, const char *>::value>::type* = 0) {
@@ -325,7 +346,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 	case 'X':
 	case 'u':
 	case 'o':
-#ifdef CXX11_PRINT_EXTENSIONS
+#ifdef CXX11_PRINTF_EXTENSIONS
 	case 'b': // extension, BINARY mode
 #endif
 		if(precision < 0) {
@@ -413,6 +434,15 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		}
 		output_string('s', s_ptr, precision, width, flags, strlen(s_ptr), ctx);
 		return Printf(ctx, format + 1, ts...);
+		
+#ifdef CXX11_PRINTF_EXTENSIONS
+	case '?':
+		{
+			std::string s = formatted_object(arg);
+			output_string('s', s.data(), precision, width, flags, s.size(), ctx);
+		}
+		return Printf(ctx, format + 1, ts...);		
+#endif
 
 	case 'n':
 		switch(modifier) {

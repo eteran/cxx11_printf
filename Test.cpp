@@ -20,6 +20,15 @@ R time_code(F func) {
 	return std::chrono::duration_cast<R>(dur);
 }
 
+#ifdef CXX11_PRINTF_EXTENSIONS
+class Test {
+};
+
+std::string to_string(Test) {
+	return "Test!";
+}
+#endif
+
 int main() {
 
 	int Foo = 1234;
@@ -46,4 +55,12 @@ int main() {
 	
 	std::cerr << "First Took:  " << time1.count() << " \xC2\xB5s to execute." << std::endl;	
 	std::cerr << "Second Took: " << time2.count() << " \xC2\xB5s to execute." << std::endl;
+	
+#ifdef CXX11_PRINTF_EXTENSIONS
+	{
+		cxx11::stdout_writer ctx;
+		std::string s = "[std::string]!";
+		cxx11::Printf(ctx, "hello %10? %?\n", s, Test());
+	}
+#endif
 }
