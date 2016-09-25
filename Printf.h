@@ -36,7 +36,6 @@ static_assert(sizeof(Flags) == sizeof(uint8_t), "");
 
 //------------------------------------------------------------------------------
 // Name: itoa
-// TODO(eteran): double check correctness
 //------------------------------------------------------------------------------
 template <char Base, unsigned int Divisor, class T>
 const char *itoa_internal(char *buf, int precision, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
@@ -193,13 +192,14 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 	}
 }
 
+// NOTE(eteran): Here is some to to fetch arguments of specific types. We also need a few 
+//               default handlers, this code should never really be encountered, but
+//               but we need it to keep the linker happy.
+
 template <class T>
 const char *formatted_string(T s, typename std::enable_if<std::is_convertible<T, const char *>::value>::type* = 0) {
 	return s;
 }
-
-// NOTE(eteran): we need a few default handlers, this code should never really be encountered, but
-//               but we need it to keep the linker happy
 
 inline const char *formatted_string(...) {
 	assert(!"Non-String Argument For String Format");
@@ -269,7 +269,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 	char num_buf[65];
 	
 	size_t slen;
-	const char *s_ptr  = 0;
+	const char *s_ptr  = nullptr;
 	
 	char ch = *format;
 	switch(ch) {
@@ -288,7 +288,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		precision    = 1;
 		ch           = 'x';
 		flags.prefix = 1;
-		// TODO(eteran): GNU printf prints "(nil)" for NULL pointers
+		// NOTE(eteran): GNU printf prints "(nil)" for NULL pointers, we print 0x0
 		s_ptr        = itoa(num_buf, ch, precision, formatted_pointer(arg), width, flags, &slen);
 
 		output_string(ch, s_ptr, precision, width, flags, slen, ctx);
@@ -490,7 +490,6 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width,
 			p = formatted_integer<long int>(arg);
 			return get_modifier(ctx, format, flags, width, p, ts...);
 		} else {
-			// TODO(eteran): what if the number causes an overflow?
 			char *endptr;
 			p = strtol(format, &endptr, 10);
 			format = endptr;
@@ -515,7 +514,6 @@ int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const
 		width = formatted_integer<long int>(arg);
 		return get_precision(ctx, format, flags, width, ts...);
 	} else {
-		// TODO(eteran): what if the number causes an overflow?
 		char *endptr;
 		width = strtol(format, &endptr, 10);
 		format = endptr;		
