@@ -192,7 +192,7 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 	}
 }
 
-// NOTE(eteran): Here is some to to fetch arguments of specific types. We also need a few 
+// NOTE(eteran): Here is some code to fetch arguments of specific types. We also need a few 
 //               default handlers, this code should never really be encountered, but
 //               but we need it to keep the linker happy.
 
