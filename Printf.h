@@ -612,6 +612,8 @@ int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 template <class Context>
 int Printf(Context &ctx, const char *format) {
 
+	assert(format);
+
 	for (; *format; ++format) {
 		if (*format != '%' || *++format == '%') {
 			ctx.write(*format);
