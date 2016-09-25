@@ -383,9 +383,33 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		return Printf(ctx, format + 1, ts...);
 
 	case 'n':
-		// TODO(eteran): "That argument shall be an int *, or variant whose size matches the (optionally) supplied integer length modifier"
-		//               handle the motifier case
-		*reinterpret_cast<int *>(formatted_pointer(arg)) = ctx.written;
+		switch(modifier) {
+		case Modifiers::MOD_CHAR:
+			*reinterpret_cast<signed char *>(formatted_pointer(arg)) = ctx.written;
+			break;
+		case Modifiers::MOD_SHORT:
+			*reinterpret_cast<short int *>(formatted_pointer(arg)) = ctx.written;
+			break;
+		case Modifiers::MOD_LONG:
+			*reinterpret_cast<long int *>(formatted_pointer(arg)) = ctx.written;
+			break;
+		case Modifiers::MOD_LONG_LONG:
+			*reinterpret_cast<long long int *>(formatted_pointer(arg)) = ctx.written;
+			break;
+		case Modifiers::MOD_INTMAX_T:
+			*reinterpret_cast<intmax_t *>(formatted_pointer(arg)) = ctx.written;
+			break;
+		case Modifiers::MOD_SIZE_T:
+			*reinterpret_cast<std::make_signed<size_t>::type *>(formatted_pointer(arg)) = ctx.written;
+			break;
+		case Modifiers::MOD_PTRDIFF_T:
+			*reinterpret_cast<ptrdiff_t *>(formatted_pointer(arg)) = ctx.written;
+			break;
+		default:
+			*reinterpret_cast<int *>(formatted_pointer(arg)) = ctx.written;
+			break;
+		}
+
 		return Printf(ctx, format + 1, ts...);
 
 	default:
