@@ -38,6 +38,8 @@ static_assert(sizeof(Flags) == sizeof(uint8_t), "");
 
 //------------------------------------------------------------------------------
 // Name: itoa
+// Desc: returns the value of d as a C-string, formatted based on Base, Divisor,
+//       and flagsplaces the length of the resultant string in *rlen
 //------------------------------------------------------------------------------
 template <char Base, unsigned int Divisor, class T>
 const char *itoa_internal(char *buf, int precision, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
@@ -156,8 +158,11 @@ const char *itoa(char *buf, char base, int precision, T d, int width, Flags flag
 	}
 }
 
-
-// NOTE(eteran): ch is the current format specifier
+//------------------------------------------------------------------------------
+// Name: output_string
+// Desc: prints a string to the Context object, taking into account padding flags
+// Note: ch is the current format specifier
+//------------------------------------------------------------------------------
 template <class Context>
 void output_string(char ch, const char *s_ptr, int precision, long int width, Flags flags, int len, Context &ctx) {
 
@@ -227,6 +232,11 @@ R formatted_integer(...) {
 	return 0;
 }
 
+
+//------------------------------------------------------------------------------
+// Name: process_format
+// Desc: default handler that should never be called at runtime
+//------------------------------------------------------------------------------
 template <class Context>
 int process_format(Context &ctx, const char *format, Flags flags, long int width, long int precision, Modifiers modifier) {
 	(void)flags;
@@ -237,6 +247,10 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 	return 0;
 }
 
+//------------------------------------------------------------------------------
+// Name: get_modifier
+// Desc: default handler that should never be called at runtime
+//------------------------------------------------------------------------------
 template <class Context>
 int get_modifier(Context &ctx, const char *format, Flags flags, long int width, long int precision) {
 	(void)ctx;
@@ -250,6 +264,7 @@ int get_modifier(Context &ctx, const char *format, Flags flags, long int width, 
 
 //------------------------------------------------------------------------------
 // Name: get_precision
+// Desc: default handler that should never be called at runtime
 //------------------------------------------------------------------------------
 template <class Context>
 int get_precision(Context &ctx, const char *format, Flags flags, long int width) {
@@ -261,7 +276,12 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width)
 	return 0;
 }
 
-
+//------------------------------------------------------------------------------
+// Name: process_format
+// Desc: prints the next argument to the Context taking into account the flags, 
+//       width, precision, and modifiers collected along the way. Then will 
+//       recursively continue processing the string
+//------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
 int process_format(Context &ctx, const char *format, Flags flags, long int width, long int precision, Modifiers modifier, const T &arg, const Ts &... ts) {
 
@@ -431,6 +451,8 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 
 //------------------------------------------------------------------------------
 // Name: get_modifier
+// Desc: gets the modifier, if any, from the format string, then calls 
+//       process_format
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
 int get_modifier(Context &ctx, const char *format, Flags flags, long int width, long int precision, const T &arg, const Ts &... ts) {
@@ -479,6 +501,8 @@ int get_modifier(Context &ctx, const char *format, Flags flags, long int width, 
 
 //------------------------------------------------------------------------------
 // Name: get_precision
+// Desc: gets the precision, if any, either from the format string or as an arg 
+//       as needed, then calls get_modifier
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
 int get_precision(Context &ctx, const char *format, Flags flags, long int width, const T &arg, const Ts &... ts) {
@@ -507,6 +531,8 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width,
 
 //------------------------------------------------------------------------------
 // Name: get_width
+// Desc: gets the width if any, either from the format string or as an arg as 
+//       needed, then calls get_precision
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
 int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const Ts &... ts) {
@@ -528,6 +554,7 @@ int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const
 
 //------------------------------------------------------------------------------
 // Name: get_flags
+// Desc: gets the flags, if any, from the format string, then calls get_width
 //------------------------------------------------------------------------------
 template <class Context, class... Ts>
 int get_flags(Context &ctx, const char *format, const Ts &... ts) {
@@ -577,6 +604,10 @@ int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 
 }
 
+//------------------------------------------------------------------------------
+// Name: Printf
+// Desc: 0 argument version of Printf. Asserts on any format character found
+//------------------------------------------------------------------------------
 template <class Context>
 int Printf(Context &ctx, const char *format) {
 
@@ -596,6 +627,10 @@ int Printf(Context &ctx, const char *format) {
 	return ctx.written;
 }
 
+//------------------------------------------------------------------------------
+// Name: Printf
+// Desc: 1+ argument version of Printf.
+//------------------------------------------------------------------------------
 template <class Context, class... Ts>
 int Printf(Context &ctx, const char *format, const Ts &... ts) {
 
