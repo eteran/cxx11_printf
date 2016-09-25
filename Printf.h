@@ -5,6 +5,7 @@
 #include "Formatters.h"
 
 #include <algorithm>
+#include <stdexcept>
 #include <cassert>
 #include <cstring>
 #include <string>
@@ -12,6 +13,12 @@
 #define CXX11_PRINTF_EXTENSIONS
 
 namespace cxx11 {
+
+struct format_error : std::runtime_error {
+	format_error(const char *what_arg) : std::runtime_error(what_arg) {
+	};
+};
+
 namespace detail {
 
 enum class Modifiers {
@@ -209,8 +216,7 @@ inline std::string formatted_object(std::string obj) {
 
 template <class T>
 std::string to_string(T) {
-	assert(!"No to_string found for this object type");
-	return "";
+	throw format_error("No to_string found for this object type");
 }
 
 template <class T>
@@ -230,8 +236,7 @@ const char *formatted_string(T s, typename std::enable_if<std::is_convertible<T,
 template <class T>
 const char *formatted_string(T s, typename std::enable_if<!std::is_convertible<T, const char *>::value>::type* = 0) {
 	(void)s;
-	assert(!"Non-String Argument For String Format");
-	return nullptr;
+	throw format_error("Non-String Argument For String Format");
 }
 
 template <class R, class T>
@@ -242,8 +247,7 @@ R formatted_pointer(T p, typename std::enable_if<std::is_convertible<T, const vo
 template <class R, class T>
 R formatted_pointer(T p, typename std::enable_if<!std::is_convertible<T, const void *>::value>::type* = 0) {
 	(void)p;
-	assert(!"Non-Pointer Argument For Pointer Format");
-	return 0;
+	throw format_error("Non-Pointer Argument For Pointer Format");
 }
 
 template <class R, class T>
@@ -254,8 +258,7 @@ R formatted_integer(T n, typename std::enable_if<std::is_integral<T>::value>::ty
 template <class R, class T>
 R formatted_integer(T n, typename std::enable_if<!std::is_integral<T>::value>::type* = 0) {
 	(void)n;
-	assert(!"Non-Integer Argument For Integer Format");
-	return 0;
+	throw format_error("Non-Integer Argument For Integer Format");
 }
 
 
@@ -271,8 +274,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 	(void)width;
 	(void)precision;
 	(void)modifier;
-	assert(!"Should Never Happen");
-	return 0;
+	throw format_error("Should Never Happen");
 }
 
 //------------------------------------------------------------------------------
@@ -286,8 +288,7 @@ int get_modifier(Context &ctx, const char *format, Flags flags, long int width, 
 	(void)flags;
 	(void)width;
 	(void)precision;
-	assert(!"Should Never Happen");
-	return 0;
+	throw format_error("Should Never Happen");
 }
 
 //------------------------------------------------------------------------------
@@ -300,8 +301,7 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width)
 	(void)format;
 	(void)flags;
 	(void)width;
-	assert(!"Should Never Happen");
-	return 0;
+	throw format_error("Should Never Happen");
 }
 
 //------------------------------------------------------------------------------
@@ -656,7 +656,7 @@ int Printf(Context &ctx, const char *format) {
 			continue;
 		}
 
-		assert(!"Bad Format");
+		throw format_error("Bad Format");
 	}
 
 	// this will usually null terminate the string
