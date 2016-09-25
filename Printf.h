@@ -206,7 +206,9 @@ const char *formatted_string(T s, typename std::enable_if<std::is_convertible<T,
 	return s;
 }
 
-inline const char *formatted_string(...) {
+template <class T>
+const char *formatted_string(T s, typename std::enable_if<!std::is_convertible<T, const char *>::value>::type* = 0) {
+	(void)s;
 	assert(!"Non-String Argument For String Format");
 	return nullptr;
 }
@@ -216,8 +218,9 @@ R formatted_pointer(T p, typename std::enable_if<std::is_convertible<T, const vo
 	return reinterpret_cast<R>(reinterpret_cast<uintptr_t>(p));
 }
 
-template <class R>
-inline R formatted_pointer(...) {
+template <class R, class T>
+R formatted_pointer(T p, typename std::enable_if<!std::is_convertible<T, const void *>::value>::type* = 0) {
+	(void)p;
 	assert(!"Non-Pointer Argument For Pointer Format");
 	return 0;
 }
@@ -227,8 +230,9 @@ R formatted_integer(T n, typename std::enable_if<std::is_integral<T>::value>::ty
 	return static_cast<R>(n);
 }
 
-template <class R>
-R formatted_integer(...) {
+template <class R, class T>
+R formatted_integer(T n, typename std::enable_if<!std::is_integral<T>::value>::type* = 0) {
+	(void)n;
 	assert(!"Non-Integer Argument For Integer Format");
 	return 0;
 }
