@@ -12,6 +12,12 @@
 
 #define CXX11_PRINTF_EXTENSIONS
 
+#if __cplusplus >= 201402L
+#define CONSTEXPR14 constexpr
+#else
+#define CONSTEXPR14 
+#endif
+
 namespace cxx11 {
 
 struct format_error : std::runtime_error {
@@ -44,88 +50,232 @@ struct Flags {
 
 static_assert(sizeof(Flags) == sizeof(uint8_t), "");
 
-//------------------------------------------------------------------------------
-// Name: itoa
-// Desc: returns the value of d as a C-string, formatted based on Base, Divisor,
-//       and flagsplaces the length of the resultant string in *rlen
-//------------------------------------------------------------------------------
-template <char Base, unsigned int Divisor, class T>
-const char *itoa_internal(char *buf, int precision, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
 
-	const char *const buf_ptr               = buf;
-	char *p                                 = buf;
-	typename std::make_unsigned<T>::type ud = d;
+// NOTE(eteran): by placing this in a class, it allows us to do things like specialization a lot easier
+template <unsigned int Divisor>
+struct itoa_helper {
+public:
+    //------------------------------------------------------------------------------
+    // Name: itoa
+    // Desc: returns the value of d as a C-string, formatted based on Divisor,
+    //       and flags. places the length of the resultant string in *rlen
+    //------------------------------------------------------------------------------
+    template <class T>
+    static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
 
-	// If %d is specified and d is negative, put `-' in the head.
-	switch(Base) {
-	case 'd':
-	case 'i':
-		if(d < 0) {
-			*p++ = '-';
-			ud = -d;
-			width -= 1;
-		} else if(flags.space) {
-			*p++ = ' ';
-			width -= 1;
-		} else if(flags.sign) {
-			*p++ = '+';
-			width -= 1;
+	    const char *const buf_ptr               = buf;
+	    char *p                                 = buf;
+	    typename std::make_unsigned<T>::type ud = d;
+
+	    // If %d is specified and d is negative, put `-' in the head.
+	    switch(Divisor) {
+	    case 10:
+		    if(d < 0) {
+			    *p++ = '-';
+			    ud = -d;
+			    width -= 1;
+		    } else if(flags.space) {
+			    *p++ = ' ';
+			    width -= 1;
+		    } else if(flags.sign) {
+			    *p++ = '+';
+			    width -= 1;
+		    }
+		    break;
+
+	    case 16:
+		    if(flags.prefix) {
+			    *p++ = '0';
+			    *p++ = alphabet[16];
+			    width -= 2;
+		    }
+		    break;
+
+	    case 8:
+		    if(flags.prefix) {
+			    *p++ = '0';
+			    width -= 1;
+		    }
+		    break;
+    #ifdef CXX11_PRINTF_EXTENSIONS
+	    case 2:
+		    if(flags.prefix) {
+			    *p++ = '0';
+                *p++ = 'b';
+			    width -= 2;
+		    }
+		    break;
+    #endif
+	    default:
+		    break;
+	    }
+
+	    // this is the point we will start reversing the string at after conversion
+	    buf = p;
+
+	    // Divide UD by Divisor until UD == 0.
+	    do {
+		    const int remainder = (ud % Divisor);
+		    *p++ = alphabet[remainder];
+		    if(width > 0) {
+			    --width;
+		    }
+	    } while (ud /= Divisor);
+
+		if(flags.padding) {
+		    while(width-- > 0) {
+			    *p++ = '0';
+		    }
 		}
-		break;
 
-	case 'X':
-	case 'x':
+	    // terminate buffer 
+	    *p = '\0';
+
+	    *rlen = (p - buf_ptr);
+
+	    std::reverse(buf, p);
+
+	    return buf_ptr;
+    }
+};
+
+// Specialization for base 16 since we can make some assumptions
+template <>
+struct itoa_helper<16> {
+public:
+    //------------------------------------------------------------------------------
+    // Name: itoa
+    // Desc: returns the value of d as a C-string, formatted based on Divisor,
+    //       and flags. places the length of the resultant string in *rlen
+    //------------------------------------------------------------------------------
+    template <class T>
+    CONSTEXPR14 static int num_digits(T n) { // TODO(eteran): use constexpr here on c++14
+    	if(n == 0) {
+        	return 1;
+		}
+        
+        int ret = 0;
+        for(; n; n >>= 4) {
+        	++ret;
+        }
+        
+        return ret;
+    }
+
+
+    //------------------------------------------------------------------------------
+    // Name: itoa
+    // Desc: returns the value of d as a C-string, formatted based on Divisor,
+    //       and flags. places the length of the resultant string in *rlen
+    //------------------------------------------------------------------------------
+    template <class T>
+    static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+
+	    char *p                                 = buf;
+	    typename std::make_unsigned<T>::type ud = d;
+        
+        // add the prefix as needed
 		if(flags.prefix) {
 			*p++ = '0';
-			*p++ = Base;
+			*p++ = alphabet[16];
 			width -= 2;
 		}
-		break;
+        
+        // figure out how many digits we need to print this number
+        int digits = num_digits(ud);
+        
+        // add in any necessary padding
+		if(flags.padding) {
+		    while(width-- > digits) {            
+			    *p++ = '0';
+		    }
+		}
+        
+        // now skip to the end of the string, because we get the numbers in reverse order
+        p += digits;
+        
+        // but first, record the length of the string
+        *rlen = (p - buf);
+        
+        *p-- = '\0';
+	    // Divide UD by Divisor until UD == 0.
+        for(; ud; ud >>= 4) {
+		    const int remainder = (ud & 0x0f);
+		    *p-- = alphabet[remainder];
+	    }
+        
+	    return buf;
+    }
+};
 
-	case 'o':
+// Specialization for base 16 since we can make some assumptions
+template <>
+struct itoa_helper<8> {
+public:
+    //------------------------------------------------------------------------------
+    // Name: itoa
+    // Desc: returns the value of d as a C-string, formatted based on Divisor,
+    //       and flags. places the length of the resultant string in *rlen
+    //------------------------------------------------------------------------------
+    template <class T>
+    CONSTEXPR14 static int num_digits(T n) { // TODO(eteran): use constexpr here on c++14
+    	if(n == 0) {
+        	return 1;
+		}
+        
+        int ret = 0;
+        for(; n; n >>= 3) {
+        	++ret;
+        }
+        
+        return ret;
+    }
+
+
+    //------------------------------------------------------------------------------
+    // Name: itoa
+    // Desc: returns the value of d as a C-string, formatted based on Divisor,
+    //       and flags. places the length of the resultant string in *rlen
+    //------------------------------------------------------------------------------
+    template <class T>
+    static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+
+	    char *p                                 = buf;
+	    typename std::make_unsigned<T>::type ud = d;
+        
+        // add the prefix as needed
 		if(flags.prefix) {
 			*p++ = '0';
 			width -= 1;
 		}
-		break;
-
-	default:
-		break;
-	}
-
-	// this is the point we will start reversing the string at after conversion
-	buf = p;
-
-	// Divide UD by Divisor until UD == 0.
-	do {
-		const int remainder = (ud % Divisor);
-		*p++ = alphabet[remainder];
-		if(width > 0) {
-			--width;
+        
+        // figure out how many digits we need to print this number
+        int digits = num_digits(ud);
+        
+        // add in any necessary padding
+		if(flags.padding) {
+		    while(width-- > digits) {            
+			    *p++ = '0';
+		    }
 		}
-	} while (ud /= Divisor);
+        
+        // now skip to the end of the string, because we get the numbers in reverse order
+        p += digits;
+        
+        // but first, record the length of the string
+        *rlen = (p - buf);
+        
+        *p-- = '\0';
+	    // Divide UD by Divisor until UD == 0.
+        for(; ud; ud >>= 3) {
+		    const int remainder = (ud & 0x07);
+		    *p-- = alphabet[remainder];
+	    }
+        
+	    return buf;
+    }
+};
 
-	while(flags.padding && width > 0) {
-		*p++ = '0';
-		--width;
-	}
-
-	if(precision > (p - buf)) {
-		precision -= (p - buf);
-		while(precision--) {
-			*p++ = '0';
-		}
-	}
-
-	// terminate buffer 
-	*p = '\0';
-	
-	*rlen = (p - buf_ptr);
-
-	std::reverse(buf, p);
-
-	return buf_ptr;
-}
 
 //------------------------------------------------------------------------------
 // Name: itoa
@@ -138,31 +288,32 @@ const char *itoa(char *buf, char base, int precision, T d, int width, Flags flag
 
 	if(d == 0 && precision == 0) {
 		*buf = '\0';
+        *rlen = 0;
 		return buf;
 	}
 	
-	static const char alphabet_l[] = "0123456789abcdef";
-	static const char alphabet_u[] = "0123456789ABCDEF";
+    // NOTE(eteran): we include the x/X, here as an easy way to put the upper/lower case prefix for hex numbers
+	static const char alphabet_l[] = "0123456789abcdefx";
+	static const char alphabet_u[] = "0123456789ABCDEFX";
 	
 	switch(base) {
 	case 'i':
-		return itoa_internal<'i', 10>(buf, precision, d, width, flags, alphabet_l, rlen);
 	case 'd':
-		return itoa_internal<'d', 10>(buf, precision, d, width, flags, alphabet_l, rlen);
-	case 'u':
-		return itoa_internal<'u', 10>(buf, precision, d, width, flags, alphabet_l, rlen);
+    case 'u':
+    	return itoa_helper<10>::format(buf, d, width, flags, alphabet_l, rlen);
+		return itoa_helper<10>::format(buf, d, width, flags, alphabet_l, rlen);
 #ifdef CXX11_PRINTF_EXTENSIONS
 	case 'b':
-		return itoa_internal<'B', 2>(buf, precision, d, width, flags, alphabet_l, rlen);
+		return itoa_helper<2>::format(buf, d, width, flags, alphabet_l, rlen);
 #endif
 	case 'X':
-		return itoa_internal<'X', 16>(buf, precision, d, width, flags, alphabet_u, rlen);
+		return itoa_helper<16>::format(buf, d, width, flags, alphabet_u, rlen);
 	case 'x':
-		return itoa_internal<'x', 16>(buf, precision, d, width, flags, alphabet_l, rlen);
+		return itoa_helper<16>::format(buf, d, width, flags, alphabet_l, rlen);
 	case 'o':
-		return itoa_internal<'o', 8>(buf, precision, d, width, flags, alphabet_l, rlen);
+		return itoa_helper<8>::format(buf, d, width, flags, alphabet_l, rlen);
 	default:
-		return itoa_internal<'d', 10>(buf, precision, d, width, flags, alphabet_l, rlen);
+		return itoa_helper<10>::format(buf, d, width, flags, alphabet_l, rlen);
 	}
 }
 
@@ -313,8 +464,8 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width)
 template <class Context, class T, class... Ts>
 int process_format(Context &ctx, const char *format, Flags flags, long int width, long int precision, Modifiers modifier, const T &arg, const Ts &... ts) {
 
-	// enough to contain a 64-bit number in bin notation
-	char num_buf[65];
+	// enough to contain a 64-bit number in bin notation + optional prefix
+	char num_buf[67];
 	
 	size_t slen;
 	const char *s_ptr  = nullptr;
