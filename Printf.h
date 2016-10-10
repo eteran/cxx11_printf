@@ -149,7 +149,7 @@ public:
     //       and flags. places the length of the resultant string in *rlen
     //------------------------------------------------------------------------------
     template <class T>
-    CONSTEXPR14 static int num_digits(T n) { // TODO(eteran): use constexpr here on c++14
+    CONSTEXPR14 static int num_digits(T n) {
     	if(n == 0) {
         	return 1;
 		}
@@ -218,7 +218,7 @@ public:
     //       and flags. places the length of the resultant string in *rlen
     //------------------------------------------------------------------------------
     template <class T>
-    CONSTEXPR14 static int num_digits(T n) { // TODO(eteran): use constexpr here on c++14
+    CONSTEXPR14 static int num_digits(T n) {
     	if(n == 0) {
         	return 1;
 		}
