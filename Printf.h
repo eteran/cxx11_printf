@@ -5,9 +5,9 @@
 #include "Formatters.h"
 
 #include <algorithm>
-#include <stdexcept>
 #include <cassert>
 #include <cstring>
+#include <stdexcept>
 #include <string>
 
 #define CXX11_PRINTF_EXTENSIONS
@@ -15,7 +15,7 @@
 #if __cplusplus >= 201402L
 #define CONSTEXPR14 constexpr
 #else
-#define CONSTEXPR14 
+#define CONSTEXPR14
 #endif
 
 namespace cxx11 {
@@ -50,7 +50,6 @@ struct Flags {
 
 static_assert(sizeof(Flags) == sizeof(uint8_t), "");
 
-
 // NOTE(eteran): by placing this in a class, it allows us to do things like specialization a lot easier
 template <unsigned int Divisor>
 struct itoa_helper;
@@ -58,295 +57,295 @@ struct itoa_helper;
 template <>
 struct itoa_helper<10> {
 	static constexpr int Divisor = 10;
+
 public:
-    //------------------------------------------------------------------------------
-    // Name: itoa
-    // Desc: returns the value of d as a C-string, formatted based on Divisor,
-    //       and flags. places the length of the resultant string in *rlen
-    //------------------------------------------------------------------------------
-    template <class T>
-    static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+	//------------------------------------------------------------------------------
+	// Name: itoa
+	// Desc: returns the value of d as a C-string, formatted based on Divisor,
+	//       and flags. places the length of the resultant string in *rlen
+	//------------------------------------------------------------------------------
+	template <class T>
+	static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
 
-	    const char *const buf_ptr               = buf;
-	    char *p                                 = buf;
-	    typename std::make_unsigned<T>::type ud = d;
+		const char *const buf_ptr = buf;
+		char *p = buf;
+		typename std::make_unsigned<T>::type ud = d;
 
-	    // If d is negative, put `-' in the head.
-		if(d < 0) {
+		// If d is negative, put `-' in the head.
+		if (d < 0) {
 			*p++ = '-';
 			ud = -d;
 			width -= 1;
-		} else if(flags.space) {
+		} else if (flags.space) {
 			*p++ = ' ';
 			width -= 1;
-		} else if(flags.sign) {
+		} else if (flags.sign) {
 			*p++ = '+';
 			width -= 1;
 		}
 
+		// this is the point we will start reversing the string at after conversion
+		buf = p;
 
-	    // this is the point we will start reversing the string at after conversion
-	    buf = p;
+		// Divide UD by Divisor until UD == 0.
+		do {
+			const int remainder = (ud % Divisor);
+			*p++ = alphabet[remainder];
+			if (width > 0) {
+				--width;
+			}
+		} while (ud /= Divisor);
 
-	    // Divide UD by Divisor until UD == 0.
-	    do {
-		    const int remainder = (ud % Divisor);
-		    *p++ = alphabet[remainder];
-		    if(width > 0) {
-			    --width;
-		    }
-	    } while (ud /= Divisor);
-
-		if(flags.padding) {
-		    while(width-- > 0) {
-			    *p++ = '0';
-		    }
+		if (flags.padding) {
+			while (width-- > 0) {
+				*p++ = '0';
+			}
 		}
 
-	    // terminate buffer 
-	    *p = '\0';
+		// terminate buffer
+		*p = '\0';
 
-	    *rlen = (p - buf_ptr);
+		*rlen = (p - buf_ptr);
 
-	    std::reverse(buf, p);
+		std::reverse(buf, p);
 
-	    return buf_ptr;
-    }
+		return buf_ptr;
+	}
 };
 
 // Specialization for base 16 since we can make some assumptions
 template <>
 struct itoa_helper<16> {
 	static constexpr int Shift = 4;
-    static constexpr int Mask  = 0x0f;
+	static constexpr int Mask = 0x0f;
+
 public:
-    //------------------------------------------------------------------------------
-    // Name: num_digits
-    // Desc: returns the number of digits needed to represent this value
-    //------------------------------------------------------------------------------
-    template <class T>
-    CONSTEXPR14 static int num_digits(T n) {
-    	if(n == 0) {
-        	return 1;
+	//------------------------------------------------------------------------------
+	// Name: num_digits
+	// Desc: returns the number of digits needed to represent this value
+	//------------------------------------------------------------------------------
+	template <class T>
+	CONSTEXPR14 static int num_digits(T n) {
+		if (n == 0) {
+			return 1;
 		}
-        
-        int ret = 0;
-        for(; n; n >>= Shift) {
-        	++ret;
-        }
-        
-        return ret;
-    }
 
+		int ret = 0;
+		for (; n; n >>= Shift) {
+			++ret;
+		}
 
-    //------------------------------------------------------------------------------
-    // Name: itoa
-    // Desc: returns the value of d as a C-string, formatted based on Divisor,
-    //       and flags. places the length of the resultant string in *rlen
-    //------------------------------------------------------------------------------
-    template <class T>
-    static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+		return ret;
+	}
 
-	    char *p                                 = buf;
-	    typename std::make_unsigned<T>::type ud = d;
-        
-        // add the prefix as needed
-		if(flags.prefix) {
+	//------------------------------------------------------------------------------
+	// Name: itoa
+	// Desc: returns the value of d as a C-string, formatted based on Divisor,
+	//       and flags. places the length of the resultant string in *rlen
+	//------------------------------------------------------------------------------
+	template <class T>
+	static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+
+		char *p = buf;
+		typename std::make_unsigned<T>::type ud = d;
+
+		// add the prefix as needed
+		if (flags.prefix) {
 			*p++ = '0';
 			*p++ = alphabet[16];
 			width -= 2;
 		}
-        
-        // figure out how many digits we need to print this number
-        int digits = num_digits(ud);
-        
-        // add in any necessary padding
-		if(flags.padding) {
-		    while(width-- > digits) {            
-			    *p++ = '0';
-		    }
+
+		// figure out how many digits we need to print this number
+		int digits = num_digits(ud);
+
+		// add in any necessary padding
+		if (flags.padding) {
+			while (width-- > digits) {
+				*p++ = '0';
+			}
 		}
-        
-        // now skip to the end of the string, because we get the numbers in reverse order
-        p += digits;
-        
-        // but first, record the length of the string
-        *rlen = (p - buf);
-        
-        *p-- = '\0';
-	    // Divide UD by Divisor until UD == 0.
-        for(; ud; ud >>= Shift) {
-		    const int remainder = (ud & Mask);
-		    *p-- = alphabet[remainder];
-	    }
-        
-	    return buf;
-    }
+
+		// now skip to the end of the string, because we get the numbers in reverse order
+		p += digits;
+
+		// but first, record the length of the string
+		*rlen = (p - buf);
+
+		*p-- = '\0';
+		// Divide UD by Divisor until UD == 0.
+		for (; ud; ud >>= Shift) {
+			const int remainder = (ud & Mask);
+			*p-- = alphabet[remainder];
+		}
+
+		return buf;
+	}
 };
 
 // Specialization for base 16 since we can make some assumptions
 template <>
 struct itoa_helper<8> {
 	static constexpr int Shift = 3;
-    static constexpr int Mask  = 0x07;
+	static constexpr int Mask = 0x07;
+
 public:
-    //------------------------------------------------------------------------------
-    // Name: num_digits
-    // Desc: returns the number of digits needed to represent this value
-    //------------------------------------------------------------------------------
-    template <class T>
-    CONSTEXPR14 static int num_digits(T n) {
-    	if(n == 0) {
-        	return 1;
+	//------------------------------------------------------------------------------
+	// Name: num_digits
+	// Desc: returns the number of digits needed to represent this value
+	//------------------------------------------------------------------------------
+	template <class T>
+	CONSTEXPR14 static int num_digits(T n) {
+		if (n == 0) {
+			return 1;
 		}
-        
-        int ret = 0;
-        for(; n; n >>= Shift) {
-        	++ret;
-        }
-        
-        return ret;
-    }
 
+		int ret = 0;
+		for (; n; n >>= Shift) {
+			++ret;
+		}
 
-    //------------------------------------------------------------------------------
-    // Name: itoa
-    // Desc: returns the value of d as a C-string, formatted based on Divisor,
-    //       and flags. places the length of the resultant string in *rlen
-    //------------------------------------------------------------------------------
-    template <class T>
-    static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+		return ret;
+	}
 
-	    char *p                                 = buf;
-	    typename std::make_unsigned<T>::type ud = d;
-        
-        // add the prefix as needed
-		if(flags.prefix) {
+	//------------------------------------------------------------------------------
+	// Name: itoa
+	// Desc: returns the value of d as a C-string, formatted based on Divisor,
+	//       and flags. places the length of the resultant string in *rlen
+	//------------------------------------------------------------------------------
+	template <class T>
+	static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+
+		char *p = buf;
+		typename std::make_unsigned<T>::type ud = d;
+
+		// add the prefix as needed
+		if (flags.prefix) {
 			*p++ = '0';
 			width -= 1;
 		}
-        
-        // figure out how many digits we need to print this number
-        int digits = num_digits(ud);
-        
-        // add in any necessary padding
-		if(flags.padding) {
-		    while(width-- > digits) {            
-			    *p++ = '0';
-		    }
+
+		// figure out how many digits we need to print this number
+		int digits = num_digits(ud);
+
+		// add in any necessary padding
+		if (flags.padding) {
+			while (width-- > digits) {
+				*p++ = '0';
+			}
 		}
-        
-        // now skip to the end of the string, because we get the numbers in reverse order
-        p += digits;
-        
-        // but first, record the length of the string
-        *rlen = (p - buf);
-        
-        *p-- = '\0';
-	    // Divide UD by Divisor until UD == 0.
-        for(; ud; ud >>= Shift) {
-		    const int remainder = (ud & Mask);
-		    *p-- = alphabet[remainder];
-	    }
-        
-	    return buf;
-    }
+
+		// now skip to the end of the string, because we get the numbers in reverse order
+		p += digits;
+
+		// but first, record the length of the string
+		*rlen = (p - buf);
+
+		*p-- = '\0';
+		// Divide UD by Divisor until UD == 0.
+		for (; ud; ud >>= Shift) {
+			const int remainder = (ud & Mask);
+			*p-- = alphabet[remainder];
+		}
+
+		return buf;
+	}
 };
 
 // Specialization for base 16 since we can make some assumptions
 template <>
 struct itoa_helper<2> {
 	static constexpr int Shift = 1;
-    static constexpr int Mask  = 0x01;
+	static constexpr int Mask = 0x01;
+
 public:
-    //------------------------------------------------------------------------------
-    // Name: num_digits
-    // Desc: returns the number of digits needed to represent this value
-    //------------------------------------------------------------------------------
-    template <class T>
-    CONSTEXPR14 static int num_digits(T n) {
-    	if(n == 0) {
-        	return 1;
+	//------------------------------------------------------------------------------
+	// Name: num_digits
+	// Desc: returns the number of digits needed to represent this value
+	//------------------------------------------------------------------------------
+	template <class T>
+	CONSTEXPR14 static int num_digits(T n) {
+		if (n == 0) {
+			return 1;
 		}
-        
-        int ret = 0;
-        for(; n; n >>= Shift) {
-        	++ret;
-        }
-        
-        return ret;
-    }
 
-    //------------------------------------------------------------------------------
-    // Name: itoa
-    // Desc: returns the value of d as a C-string, formatted based on Divisor,
-    //       and flags. places the length of the resultant string in *rlen
-    //------------------------------------------------------------------------------
-    template <class T>
-    static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+		int ret = 0;
+		for (; n; n >>= Shift) {
+			++ret;
+		}
 
-	    char *p                                 = buf;
-	    typename std::make_unsigned<T>::type ud = d;
-        
-        // add the prefix as needed
-		if(flags.prefix) {
+		return ret;
+	}
+
+	//------------------------------------------------------------------------------
+	// Name: itoa
+	// Desc: returns the value of d as a C-string, formatted based on Divisor,
+	//       and flags. places the length of the resultant string in *rlen
+	//------------------------------------------------------------------------------
+	template <class T>
+	static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+
+		char *p = buf;
+		typename std::make_unsigned<T>::type ud = d;
+
+		// add the prefix as needed
+		if (flags.prefix) {
 			*p++ = '0';
 			*p++ = 'b';
 			width -= 2;
 		}
-        
-        // figure out how many digits we need to print this number
-        int digits = num_digits(ud);
-        
-        // add in any necessary padding
-		if(flags.padding) {
-		    while(width-- > digits) {            
-			    *p++ = '0';
-		    }
-		}
-        
-        // now skip to the end of the string, because we get the numbers in reverse order
-        p += digits;
-        
-        // but first, record the length of the string
-        *rlen = (p - buf);
-        
-        *p-- = '\0';
-	    // Divide UD by Divisor until UD == 0.
-        for(; ud; ud >>= Shift) {
-		    const int remainder = (ud & Mask);
-		    *p-- = alphabet[remainder];
-	    }
-        
-	    return buf;
-    }
-};
 
+		// figure out how many digits we need to print this number
+		int digits = num_digits(ud);
+
+		// add in any necessary padding
+		if (flags.padding) {
+			while (width-- > digits) {
+				*p++ = '0';
+			}
+		}
+
+		// now skip to the end of the string, because we get the numbers in reverse order
+		p += digits;
+
+		// but first, record the length of the string
+		*rlen = (p - buf);
+
+		*p-- = '\0';
+		// Divide UD by Divisor until UD == 0.
+		for (; ud; ud >>= Shift) {
+			const int remainder = (ud & Mask);
+			*p-- = alphabet[remainder];
+		}
+
+		return buf;
+	}
+};
 
 //------------------------------------------------------------------------------
 // Name: itoa
-// Desc: as a minor optimization, let's determine a few things up front and pass 
+// Desc: as a minor optimization, let's determine a few things up front and pass
 //       them as template parameters enabling some more aggressive optimizations
 //       when the division can use more efficient operations
 //------------------------------------------------------------------------------
 template <class T>
 const char *itoa(char *buf, char base, int precision, T d, int width, Flags flags, size_t *rlen) {
 
-	if(d == 0 && precision == 0) {
+	if (d == 0 && precision == 0) {
 		*buf = '\0';
-        *rlen = 0;
+		*rlen = 0;
 		return buf;
 	}
-	
-    // NOTE(eteran): we include the x/X, here as an easy way to put the upper/lower case prefix for hex numbers
+
+	// NOTE(eteran): we include the x/X, here as an easy way to put the upper/lower case prefix for hex numbers
 	static const char alphabet_l[] = "0123456789abcdefx";
 	static const char alphabet_u[] = "0123456789ABCDEFX";
-	
-	switch(base) {
+
+	switch (base) {
 	case 'i':
 	case 'd':
-    case 'u':
-    	return itoa_helper<10>::format(buf, d, width, flags, alphabet_l, rlen);
+	case 'u':
+		return itoa_helper<10>::format(buf, d, width, flags, alphabet_l, rlen);
 		return itoa_helper<10>::format(buf, d, width, flags, alphabet_l, rlen);
 #ifdef CXX11_PRINTF_EXTENSIONS
 	case 'b':
@@ -371,14 +370,14 @@ const char *itoa(char *buf, char base, int precision, T d, int width, Flags flag
 template <class Context>
 void output_string(char ch, const char *s_ptr, int precision, long int width, Flags flags, int len, Context &ctx) {
 
-	if((ch == 's' && precision >= 0 && precision < len)) {
+	if ((ch == 's' && precision >= 0 && precision < len)) {
 		len = precision;
 	}
 
 	// if not left justified padding goes first...
-	if(!flags.justify) {
+	if (!flags.justify) {
 		// spaces go before the prefix...
-		while(width-- > len) {
+		while (width-- > len) {
 			ctx.write(' ');
 		}
 	}
@@ -387,20 +386,19 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 	// NOTE(eteran): len is at most strlen, possible is less
 	// so we can just loop len times
 	width -= len;
-	while(len--) {
+	while (len--) {
 		ctx.write(*s_ptr++);
 	}
-	
 
 	// if left justified padding goes last...
-	if(flags.justify) {
-		while(width-- > 0) {
+	if (flags.justify) {
+		while (width-- > 0) {
 			ctx.write(' ');
 		}
 	}
 }
 
-// NOTE(eteran): Here is some code to fetch arguments of specific types. We also need a few 
+// NOTE(eteran): Here is some code to fetch arguments of specific types. We also need a few
 //               default handlers, this code should never really be encountered, but
 //               but we need it to keep the linker happy.
 
@@ -422,40 +420,38 @@ std::string formatted_object(T obj) {
 }
 #endif
 
-
 template <class T>
-const char *formatted_string(T s, typename std::enable_if<std::is_convertible<T, const char *>::value>::type* = 0) {
+const char *formatted_string(T s, typename std::enable_if<std::is_convertible<T, const char *>::value>::type * = 0) {
 	return s;
 }
 
 template <class T>
-const char *formatted_string(T s, typename std::enable_if<!std::is_convertible<T, const char *>::value>::type* = 0) {
+const char *formatted_string(T s, typename std::enable_if<!std::is_convertible<T, const char *>::value>::type * = 0) {
 	(void)s;
 	throw format_error("Non-String Argument For String Format");
 }
 
 template <class R, class T>
-R formatted_pointer(T p, typename std::enable_if<std::is_convertible<T, const void *>::value>::type* = 0) {
+R formatted_pointer(T p, typename std::enable_if<std::is_convertible<T, const void *>::value>::type * = 0) {
 	return reinterpret_cast<R>(reinterpret_cast<uintptr_t>(p));
 }
 
 template <class R, class T>
-R formatted_pointer(T p, typename std::enable_if<!std::is_convertible<T, const void *>::value>::type* = 0) {
+R formatted_pointer(T p, typename std::enable_if<!std::is_convertible<T, const void *>::value>::type * = 0) {
 	(void)p;
 	throw format_error("Non-Pointer Argument For Pointer Format");
 }
 
 template <class R, class T>
-R formatted_integer(T n, typename std::enable_if<std::is_integral<T>::value>::type* = 0) {
+R formatted_integer(T n, typename std::enable_if<std::is_integral<T>::value>::type * = 0) {
 	return static_cast<R>(n);
 }
 
 template <class R, class T>
-R formatted_integer(T n, typename std::enable_if<!std::is_integral<T>::value>::type* = 0) {
+R formatted_integer(T n, typename std::enable_if<!std::is_integral<T>::value>::type * = 0) {
 	(void)n;
 	throw format_error("Non-Integer Argument For Integer Format");
 }
-
 
 //------------------------------------------------------------------------------
 // Name: process_format
@@ -501,8 +497,8 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width)
 
 //------------------------------------------------------------------------------
 // Name: process_format
-// Desc: prints the next argument to the Context taking into account the flags, 
-//       width, precision, and modifiers collected along the way. Then will 
+// Desc: prints the next argument to the Context taking into account the flags,
+//       width, precision, and modifiers collected along the way. Then will
 //       recursively continue processing the string
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
@@ -510,12 +506,12 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 
 	// enough to contain a 64-bit number in bin notation + optional prefix
 	char num_buf[67];
-	
+
 	size_t slen;
-	const char *s_ptr  = nullptr;
-	
+	const char *s_ptr = nullptr;
+
 	char ch = *format;
-	switch(ch) {
+	switch (ch) {
 	case 'e':
 	case 'E':
 	case 'f':
@@ -528,11 +524,11 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 		return Printf(ctx, format + 1, ts...);
 
 	case 'p':
-		precision    = 1;
-		ch           = 'x';
+		precision = 1;
+		ch = 'x';
 		flags.prefix = 1;
 		// NOTE(eteran): GNU printf prints "(nil)" for NULL pointers, we print 0x0
-		s_ptr        = itoa(num_buf, ch, precision, formatted_pointer<uintptr_t>(arg), width, flags, &slen);
+		s_ptr = itoa(num_buf, ch, precision, formatted_pointer<uintptr_t>(arg), width, flags, &slen);
 
 		output_string(ch, s_ptr, precision, width, flags, slen, ctx);
 		return Printf(ctx, format + 1, ts...);
@@ -544,11 +540,11 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 #ifdef CXX11_PRINTF_EXTENSIONS
 	case 'b': // extension, BINARY mode
 #endif
-		if(precision < 0) {
+		if (precision < 0) {
 			precision = 1;
 		}
 
-		switch(modifier) {
+		switch (modifier) {
 		case Modifiers::MOD_CHAR:
 			s_ptr = itoa(num_buf, ch, precision, formatted_integer<unsigned char>(arg), width, flags, &slen);
 			break;
@@ -580,11 +576,11 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 
 	case 'i':
 	case 'd':
-		if(precision < 0) {
+		if (precision < 0) {
 			precision = 1;
 		}
 
-		switch(modifier) {
+		switch (modifier) {
 		case Modifiers::MOD_CHAR:
 			s_ptr = itoa(num_buf, ch, precision, formatted_integer<signed char>(arg), width, flags, &slen);
 			break;
@@ -624,23 +620,22 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 
 	case 's':
 		s_ptr = formatted_string(arg);
-		if(!s_ptr) {
+		if (!s_ptr) {
 			s_ptr = "(null)";
 		}
 		output_string('s', s_ptr, precision, width, flags, strlen(s_ptr), ctx);
 		return Printf(ctx, format + 1, ts...);
-		
+
 #ifdef CXX11_PRINTF_EXTENSIONS
-	case '?':
-		{
-			std::string s = formatted_object(arg);
-			output_string('s', s.data(), precision, width, flags, s.size(), ctx);
-		}
-		return Printf(ctx, format + 1, ts...);		
+	case '?': {
+		std::string s = formatted_object(arg);
+		output_string('s', s.data(), precision, width, flags, s.size(), ctx);
+	}
+		return Printf(ctx, format + 1, ts...);
 #endif
 
 	case 'n':
-		switch(modifier) {
+		switch (modifier) {
 		case Modifiers::MOD_CHAR:
 			*formatted_pointer<signed char *>(arg) = ctx.written;
 			break;
@@ -683,7 +678,7 @@ int process_format(Context &ctx, const char *format, Flags flags, long int width
 
 //------------------------------------------------------------------------------
 // Name: get_modifier
-// Desc: gets the modifier, if any, from the format string, then calls 
+// Desc: gets the modifier, if any, from the format string, then calls
 //       process_format
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
@@ -691,11 +686,11 @@ int get_modifier(Context &ctx, const char *format, Flags flags, long int width, 
 
 	Modifiers modifier = Modifiers::MOD_NONE;
 
-	switch(*format) {
+	switch (*format) {
 	case 'h':
 		modifier = Modifiers::MOD_SHORT;
 		++format;
-		if(*format == 'h') {
+		if (*format == 'h') {
 			modifier = Modifiers::MOD_CHAR;
 			++format;
 		}
@@ -703,7 +698,7 @@ int get_modifier(Context &ctx, const char *format, Flags flags, long int width, 
 	case 'l':
 		modifier = Modifiers::MOD_LONG;
 		++format;
-		if(*format == 'l') {
+		if (*format == 'l') {
 			modifier = Modifiers::MOD_LONG_LONG;
 			++format;
 		}
@@ -733,7 +728,7 @@ int get_modifier(Context &ctx, const char *format, Flags flags, long int width, 
 
 //------------------------------------------------------------------------------
 // Name: get_precision
-// Desc: gets the precision, if any, either from the format string or as an arg 
+// Desc: gets the precision, if any, either from the format string or as an arg
 //       as needed, then calls get_modifier
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
@@ -742,10 +737,10 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width,
 	// default to non-existant
 	long int p = -1;
 
-	if(*format == '.') {
+	if (*format == '.') {
 
 		++format;
-		if(*format == '*') {
+		if (*format == '*') {
 			++format;
 			// pull an int off the stack for processing
 			p = formatted_integer<long int>(arg);
@@ -757,13 +752,13 @@ int get_precision(Context &ctx, const char *format, Flags flags, long int width,
 			return get_modifier(ctx, format, flags, width, p, arg, ts...);
 		}
 	}
-	
+
 	return get_modifier(ctx, format, flags, width, p, arg, ts...);
 }
 
 //------------------------------------------------------------------------------
 // Name: get_width
-// Desc: gets the width if any, either from the format string or as an arg as 
+// Desc: gets the width if any, either from the format string or as an arg as
 //       needed, then calls get_precision
 //------------------------------------------------------------------------------
 template <class Context, class T, class... Ts>
@@ -771,7 +766,7 @@ int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const
 
 	int width = 0;
 
-	if(*format == '*') {
+	if (*format == '*') {
 		++format;
 		// pull an int off the stack for processing
 		width = formatted_integer<long int>(arg);
@@ -779,7 +774,7 @@ int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const
 	} else {
 		char *endptr;
 		width = strtol(format, &endptr, 10);
-		format = endptr;		
+		format = endptr;
 		return get_precision(ctx, format, flags, width, arg, ts...);
 	}
 }
@@ -791,17 +786,17 @@ int get_width(Context &ctx, const char *format, Flags flags, const T &arg, const
 template <class Context, class... Ts>
 int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 
-	Flags f   = { 0, 0, 0, 0, 0, 0 };
+	Flags f = {0, 0, 0, 0, 0, 0};
 	bool done = false;
 
 	// skip past the % char
 	++format;
 
-	while(!done) {
+	while (!done) {
 
 		char ch = *format++;
 
-		switch(ch) {
+		switch (ch) {
 		case '-':
 			// justify, overrides padding
 			f.justify = 1;
@@ -809,11 +804,11 @@ int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 			break;
 		case '+':
 			// sign, overrides space
-			f.sign  = 1;
+			f.sign = 1;
 			f.space = 0;
 			break;
 		case ' ':
-			if(!f.sign) {
+			if (!f.sign) {
 				f.space = 1;
 			}
 			break;
@@ -821,7 +816,7 @@ int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 			f.prefix = 1;
 			break;
 		case '0':
-			if(!f.justify) {
+			if (!f.justify) {
 				f.padding = 1;
 			}
 			break;
@@ -833,7 +828,6 @@ int get_flags(Context &ctx, const char *format, const Ts &... ts) {
 
 	return get_width(ctx, format, f, ts...);
 }
-
 }
 
 //------------------------------------------------------------------------------
@@ -870,10 +864,10 @@ int Printf(Context &ctx, const char *format, const Ts &... ts) {
 
 	assert(format);
 
-	while(*format != '\0') {
-		if(*format == '%') {
+	while (*format != '\0') {
+		if (*format == '%') {
 			// %[flag][width][.precision][length]char
-			
+
 			// this recurses into get_width -> get_precision -> get_length -> process_format
 			return detail::get_flags(ctx, format, ts...);
 		} else {
@@ -894,7 +888,7 @@ int Printf(Context &ctx, const char *format, const Ts &... ts) {
 template <class... Ts>
 int sprintf(std::ostream &os, const char *format, const Ts &... ts) {
 	ostream_writer ctx(os);
-    return Printf(ctx, format, ts...);
+	return Printf(ctx, format, ts...);
 }
 
 //------------------------------------------------------------------------------
@@ -904,7 +898,7 @@ int sprintf(std::ostream &os, const char *format, const Ts &... ts) {
 template <class... Ts>
 int sprintf(char *str, size_t size, const char *format, const Ts &... ts) {
 	buffer_writer ctx(str, size);
-    return Printf(ctx, format, ts...);
+	return Printf(ctx, format, ts...);
 }
 
 //------------------------------------------------------------------------------
@@ -914,10 +908,8 @@ int sprintf(char *str, size_t size, const char *format, const Ts &... ts) {
 template <class... Ts>
 int printf(const char *format, const Ts &... ts) {
 	stdout_writer ctx;
-    return Printf(ctx, format, ts...);
+	return Printf(ctx, format, ts...);
 }
-
 }
-
 
 #endif
