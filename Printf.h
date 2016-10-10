@@ -332,9 +332,8 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 	// if not left justified padding goes first...
 	if(!flags.justify) {
 		// spaces go before the prefix...
-		while(width > len) {
+		while(width-- > len) {
 			ctx.write(' ');
-			--width;
 		}
 	}
 
@@ -349,9 +348,8 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 
 	// if left justified padding goes last...
 	if(flags.justify) {
-		while(width > 0) {
+		while(width-- > 0) {
 			ctx.write(' ');
-			--width;
 		}
 	}
 }
