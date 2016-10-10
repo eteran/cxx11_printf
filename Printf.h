@@ -144,9 +144,8 @@ template <>
 struct itoa_helper<16> {
 public:
     //------------------------------------------------------------------------------
-    // Name: itoa
-    // Desc: returns the value of d as a C-string, formatted based on Divisor,
-    //       and flags. places the length of the resultant string in *rlen
+    // Name: num_digits
+    // Desc: returns the number of digits needed to represent this value
     //------------------------------------------------------------------------------
     template <class T>
     CONSTEXPR14 static int num_digits(T n) {
@@ -213,9 +212,8 @@ template <>
 struct itoa_helper<8> {
 public:
     //------------------------------------------------------------------------------
-    // Name: itoa
-    // Desc: returns the value of d as a C-string, formatted based on Divisor,
-    //       and flags. places the length of the resultant string in *rlen
+    // Name: num_digits
+    // Desc: returns the number of digits needed to represent this value
     //------------------------------------------------------------------------------
     template <class T>
     CONSTEXPR14 static int num_digits(T n) {
@@ -269,6 +267,73 @@ public:
 	    // Divide UD by Divisor until UD == 0.
         for(; ud; ud >>= 3) {
 		    const int remainder = (ud & 0x07);
+		    *p-- = alphabet[remainder];
+	    }
+        
+	    return buf;
+    }
+};
+
+// Specialization for base 16 since we can make some assumptions
+template <>
+struct itoa_helper<2> {
+public:
+    //------------------------------------------------------------------------------
+    // Name: num_digits
+    // Desc: returns the number of digits needed to represent this value
+    //------------------------------------------------------------------------------
+    template <class T>
+    CONSTEXPR14 static int num_digits(T n) {
+    	if(n == 0) {
+        	return 1;
+		}
+        
+        int ret = 0;
+        for(; n; n >>= 1) {
+        	++ret;
+        }
+        
+        return ret;
+    }
+
+    //------------------------------------------------------------------------------
+    // Name: itoa
+    // Desc: returns the value of d as a C-string, formatted based on Divisor,
+    //       and flags. places the length of the resultant string in *rlen
+    //------------------------------------------------------------------------------
+    template <class T>
+    static const char *format(char *buf, T d, int width, Flags flags, const char *alphabet, size_t *rlen) {
+
+	    char *p                                 = buf;
+	    typename std::make_unsigned<T>::type ud = d;
+        
+        // add the prefix as needed
+		if(flags.prefix) {
+			*p++ = '0';
+			*p++ = 'b';
+			width -= 2;
+		}
+        
+        // figure out how many digits we need to print this number
+        int digits = num_digits(ud);
+        
+        // add in any necessary padding
+		if(flags.padding) {
+		    while(width-- > digits) {            
+			    *p++ = '0';
+		    }
+		}
+        
+        // now skip to the end of the string, because we get the numbers in reverse order
+        p += digits;
+        
+        // but first, record the length of the string
+        *rlen = (p - buf);
+        
+        *p-- = '\0';
+	    // Divide UD by Divisor until UD == 0.
+        for(; ud; ud >>= 1) {
+		    const int remainder = (ud & 0x01);
 		    *p-- = alphabet[remainder];
 	    }
         
