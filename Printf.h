@@ -53,7 +53,11 @@ static_assert(sizeof(Flags) == sizeof(uint8_t), "");
 
 // NOTE(eteran): by placing this in a class, it allows us to do things like specialization a lot easier
 template <unsigned int Divisor>
-struct itoa_helper {
+struct itoa_helper;
+
+template <>
+struct itoa_helper<10> {
+	static constexpr int Divisor = 10;
 public:
     //------------------------------------------------------------------------------
     // Name: itoa
@@ -67,48 +71,19 @@ public:
 	    char *p                                 = buf;
 	    typename std::make_unsigned<T>::type ud = d;
 
-	    // If %d is specified and d is negative, put `-' in the head.
-	    switch(Divisor) {
-	    case 10:
-		    if(d < 0) {
-			    *p++ = '-';
-			    ud = -d;
-			    width -= 1;
-		    } else if(flags.space) {
-			    *p++ = ' ';
-			    width -= 1;
-		    } else if(flags.sign) {
-			    *p++ = '+';
-			    width -= 1;
-		    }
-		    break;
+	    // If d is negative, put `-' in the head.
+		if(d < 0) {
+			*p++ = '-';
+			ud = -d;
+			width -= 1;
+		} else if(flags.space) {
+			*p++ = ' ';
+			width -= 1;
+		} else if(flags.sign) {
+			*p++ = '+';
+			width -= 1;
+		}
 
-	    case 16:
-		    if(flags.prefix) {
-			    *p++ = '0';
-			    *p++ = alphabet[16];
-			    width -= 2;
-		    }
-		    break;
-
-	    case 8:
-		    if(flags.prefix) {
-			    *p++ = '0';
-			    width -= 1;
-		    }
-		    break;
-    #ifdef CXX11_PRINTF_EXTENSIONS
-	    case 2:
-		    if(flags.prefix) {
-			    *p++ = '0';
-                *p++ = 'b';
-			    width -= 2;
-		    }
-		    break;
-    #endif
-	    default:
-		    break;
-	    }
 
 	    // this is the point we will start reversing the string at after conversion
 	    buf = p;
@@ -142,6 +117,8 @@ public:
 // Specialization for base 16 since we can make some assumptions
 template <>
 struct itoa_helper<16> {
+	static constexpr int Shift = 4;
+    static constexpr int Mask  = 0x0f;
 public:
     //------------------------------------------------------------------------------
     // Name: num_digits
@@ -154,7 +131,7 @@ public:
 		}
         
         int ret = 0;
-        for(; n; n >>= 4) {
+        for(; n; n >>= Shift) {
         	++ret;
         }
         
@@ -198,8 +175,8 @@ public:
         
         *p-- = '\0';
 	    // Divide UD by Divisor until UD == 0.
-        for(; ud; ud >>= 4) {
-		    const int remainder = (ud & 0x0f);
+        for(; ud; ud >>= Shift) {
+		    const int remainder = (ud & Mask);
 		    *p-- = alphabet[remainder];
 	    }
         
@@ -210,6 +187,8 @@ public:
 // Specialization for base 16 since we can make some assumptions
 template <>
 struct itoa_helper<8> {
+	static constexpr int Shift = 3;
+    static constexpr int Mask  = 0x07;
 public:
     //------------------------------------------------------------------------------
     // Name: num_digits
@@ -222,7 +201,7 @@ public:
 		}
         
         int ret = 0;
-        for(; n; n >>= 3) {
+        for(; n; n >>= Shift) {
         	++ret;
         }
         
@@ -265,8 +244,8 @@ public:
         
         *p-- = '\0';
 	    // Divide UD by Divisor until UD == 0.
-        for(; ud; ud >>= 3) {
-		    const int remainder = (ud & 0x07);
+        for(; ud; ud >>= Shift) {
+		    const int remainder = (ud & Mask);
 		    *p-- = alphabet[remainder];
 	    }
         
@@ -277,6 +256,8 @@ public:
 // Specialization for base 16 since we can make some assumptions
 template <>
 struct itoa_helper<2> {
+	static constexpr int Shift = 1;
+    static constexpr int Mask  = 0x01;
 public:
     //------------------------------------------------------------------------------
     // Name: num_digits
@@ -289,7 +270,7 @@ public:
 		}
         
         int ret = 0;
-        for(; n; n >>= 1) {
+        for(; n; n >>= Shift) {
         	++ret;
         }
         
@@ -332,8 +313,8 @@ public:
         
         *p-- = '\0';
 	    // Divide UD by Divisor until UD == 0.
-        for(; ud; ud >>= 1) {
-		    const int remainder = (ud & 0x01);
+        for(; ud; ud >>= Shift) {
+		    const int remainder = (ud & Mask);
 		    *p-- = alphabet[remainder];
 	    }
         
