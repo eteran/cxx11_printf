@@ -692,6 +692,36 @@ int Printf(Context &ctx, const char *format, const Ts &... ts) {
 	return Printf(ctx, format + 1, ts...);
 }
 
+//------------------------------------------------------------------------------
+// Name: snprintf
+// Desc: implementation of what snprintf compatible interface
+//------------------------------------------------------------------------------
+template <class... Ts>
+int sprintf(std::ostream &os, const char *format, const Ts &... ts) {
+	ostream_writer ctx(os);
+    return Printf(ctx, format, ts...);
+}
+
+//------------------------------------------------------------------------------
+// Name: sprintf
+// Desc: implementation of what s[n]printf compatible interface
+//------------------------------------------------------------------------------
+template <class... Ts>
+int sprintf(char *str, size_t size, const char *format, const Ts &... ts) {
+	buffer_writer ctx(str, size);
+    return Printf(ctx, format, ts...);
+}
+
+//------------------------------------------------------------------------------
+// Name: printf
+// Desc: implementation of what printf compatible interface
+//------------------------------------------------------------------------------
+template <class... Ts>
+int printf(const char *format, const Ts &... ts) {
+	stdout_writer ctx;
+    return Printf(ctx, format, ts...);
+}
+
 }
 
 

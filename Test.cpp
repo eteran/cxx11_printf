@@ -34,9 +34,8 @@ int main() {
 	int Foo = 1234;
 
 	// first test correctness
-	cxx11::stdout_writer ctx;
-	cxx11::Printf(ctx, "hello %*s, %c, %d, %08x %p %016u %02x\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1);
-	printf(            "hello %*s, %c, %d, %08x %p %016u %02x\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1);
+	cxx11::printf("hello %*s, %c, %d, %08x %p %016u %02x\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1);
+	printf(       "hello %*s, %c, %d, %08x %p %016u %02x\n", 10, "world", 0x41, -123, 0x1234, static_cast<void *>(&Foo), -4, -1);
 	
 	typedef std::chrono::microseconds ms;
 	
@@ -44,8 +43,7 @@ int main() {
 	
 	auto time1 = time_code<ms, count>([&Foo]() {
 		char buf[256];
-		cxx11::buffer_writer ctx(buf, 256);
-		cxx11::Printf(ctx, "hello %*s, %c, %d, %08x %p %016u %02x\n", 10, "world", 0x41, -123, 0x1234, &Foo, -4, -1);	
+		cxx11::sprintf(buf, 256, "hello %*s, %c, %d, %08x %p %016u %02x\n", 10, "world", 0x41, -123, 0x1234, &Foo, -4, -1);	
 	});
 	
 	auto time2 = time_code<ms, count>([&Foo]() {
@@ -58,9 +56,8 @@ int main() {
 	
 #ifdef CXX11_PRINTF_EXTENSIONS
 	{
-		cxx11::stdout_writer ctx;
 		std::string s = "[std::string]!";
-		cxx11::Printf(ctx, "hello %10? %?\n", s, Test());
+		cxx11::sprintf(std::cout, "hello %10? %?\n", s, Test());
 	}
 #endif
 }

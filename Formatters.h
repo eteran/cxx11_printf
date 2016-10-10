@@ -33,6 +33,23 @@ struct buffer_writer  {
 };
 
 // This context writes to a container using a std::back_inserter
+struct ostream_writer {
+
+	ostream_writer(std::ostream &os) : os_(os) {
+	}
+
+	void write(char ch) {
+		os_.put(ch);
+		++written;
+	}
+	
+	void done() {}
+
+	std::ostream &os_;
+	size_t written = 0;
+};
+
+// This context writes to a container using a std::back_inserter
 template <class C>
 struct container_writer {
 

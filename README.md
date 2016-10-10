@@ -43,6 +43,20 @@ but there are several examples in Formatters.h
 
 --------
 
+Additionally, while the context based interface is very flexible and can 
+accomidate essentially any destination stream or buffer. This implementation
+also includes more familiar interfaces:
+
+* `int cxx11::sprintf(std::ostream &os, const char *format, const Ts &... ts);`
+* `int cxx11::sprintf(char *str, size_t size, const char *format, const Ts &... ts);`
+* `int cxx11::printf(const char *format, const Ts &... ts);`
+
+All of which work in the expected ways without the need to manually manage the 
+concept of "contexts".
+
+
+--------
+
 Performance so far, when optimizations are at -O3 is comparable to glibc's 
 printf. Here is the included test program's output on my machine:
 
