@@ -57,6 +57,9 @@ int main() {
 	{
 		std::string s = "[std::string]!";
 		cxx11::sprintf(std::cout, "hello %10? %?\n", s, Test());
+		
+		cxx11::printf("%032b\n", 5ul);
+		cxx11::printf("%032b\n", 1234ul);
 	}
 #endif
 }
