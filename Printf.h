@@ -289,7 +289,6 @@ const char *itoa(char (&buf)[N], char base, int precision, T d, int width, Flags
 	case 'd':
 	case 'u':
 		return itoa_helper<10>::format(buf, d, width, flags, alphabet_l, rlen);
-		return itoa_helper<10>::format(buf, d, width, flags, alphabet_l, rlen);
 #ifdef CXX11_PRINTF_EXTENSIONS
 	case 'b':
 		return itoa_helper<2>::format(buf, d, width, flags, alphabet_l, rlen);
