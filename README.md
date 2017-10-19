@@ -22,6 +22,9 @@ and a data member:
 	// writes a single character to the output of your choosing
 	void write(char ch);
 	
+	// writes a string of characters to the output of your choosing
+	void write(const char *p, size_t n);
+	
 	// called when formatting is complete, useful for ensuring NUL termination
 	void done();
 	
@@ -60,9 +63,9 @@ concept of "contexts".
 Performance so far, when optimizations are at -O3 is comparable to glibc's 
 printf. Here is the included test program's output on my machine:
 
-	hello      world, A, -123, 00001234 0x7ffeab406cc4 0000004294967292 ffffffff
-	hello      world, A, -123, 00001234 0x7ffeab406cc4 0000004294967292 ffffffff
-	First Took:  410116 탎 to execute.
-	Second Took: 407768 탎 to execute.
+	hello      world, A, -123, 00001234 0x7ffe75bd6ff8 0000004294967292 ffffffff 0000000000002322
+	hello      world, A, -123, 00001234 0x7ffe75bd6ff8 0000004294967292 ffffffff 0000000000002322
+	First Took:  383955 탎 to execute.
+	Second Took: 382404 탎 to execute.
 
 I am sure however, that there is room for some optimizations too :-)

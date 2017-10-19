@@ -12,12 +12,6 @@
 
 #define CXX11_PRINTF_EXTENSIONS
 
-#if __cplusplus >= 201402L
-#define CONSTEXPR14 constexpr
-#else
-#define CONSTEXPR14
-#endif
-
 namespace cxx11 {
 
 struct format_error : std::runtime_error {
@@ -328,9 +322,7 @@ void output_string(char ch, const char *s_ptr, int precision, long int width, Fl
 	// NOTE(eteran): len is at most strlen, possible is less
 	// so we can just loop len times
 	width -= len;
-	while (len--) {
-		ctx.write(*s_ptr++);
-	}
+	ctx.write(s_ptr, len);
 
 	// if left justified padding goes last...
 	if (flags.justify) {
